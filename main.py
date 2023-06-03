@@ -9,7 +9,7 @@ import PyPDF2
 import io
 from googleapiclient.http import MediaIoBaseDownload
 
-openai.api_key = "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"
+openai.api_key = "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"
 SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets',
           'https://www.googleapis.com/auth/documents']
 
@@ -100,7 +100,9 @@ def process():
                             for chunk in chunked_text:
                                 chunk_response = call_gpt(chunk, query)
                                 response += chunk_response
-                            print(response)
+                        else:
+                            response = call_gpt(content, query)
+                        print(response)
 
                     except Exception as e:
                         print("An error occurred while Querying Content:" + str(e))
@@ -109,24 +111,29 @@ def process():
                         print(content)
                     except Exception as e:
                         print("An error occurred while reading file:" + str(e))
+                else:
+                    print(" Choose either Q or R!!")
+                    continue
                 more_operations = input("Do you want to perform more actions on this file? (Y/N):")
                 if more_operations.lower() == 'y':
                     continue
-                else:
+                elif more_operations.lower() == 'n':
                     file_operations = False
+                else:
+                    print("Invalid Input")
+
         select_other_file = input("Do you want to choose another file to perform actions? (Y/N):")
         if select_other_file.lower() == 'y':
             same_file = True
-            os.remove("output.pdf")
-        else:
+        elif select_other_file.lower() == 'n':
             same_file = False
+        else:
+            print("Invalid Input")
 
 
 def call_gpt(content, query):
     try:
-
         prompt = query + ':' + content
-
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}])
@@ -139,6 +146,7 @@ def call_gpt(content, query):
 if __name__ == '__main__':
     while 1:
         process()
+        os.remove("output.pdf")
         proceed = input(" Do you want to exit the program? (Y/N):")
         if proceed.lower() == 'n':
             continue
