@@ -9,7 +9,7 @@ import PyPDF2
 import io
 from googleapiclient.http import MediaIoBaseDownload
 
-openai.api_key = "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"
+openai.api_key = ""
 SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets',
           'https://www.googleapis.com/auth/documents']
 
