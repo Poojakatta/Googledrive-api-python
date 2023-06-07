@@ -9,10 +9,12 @@ import PyPDF2
 import io
 from googleapiclient.http import MediaIoBaseDownload
 
-openai.api_key = ""
+# Replace the Openai APIKEY
+openai.api_key = "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"
 SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets',
           'https://www.googleapis.com/auth/documents']
 
+# Generating credentials and connecting to Google drive
 flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', scopes=SCOPES)
 credentials = flow.run_local_server()
 credentials_filename = 'credentials.json'
@@ -24,6 +26,7 @@ drive_service = build('drive', 'v3', credentials=credentials)
 
 def list_files():
     try:
+        # Get all files available in google drive
         result = drive_service.files().list().execute()
         files = result.get('files', [])
         if not files:
@@ -37,12 +40,15 @@ def list_files():
 
 def read_file(file_id, file_type):
     try:
+        #   read the content inside the file based on type of file
         if file_type.lower() == "sheet":
+            # to read excel, we need gspread library and share the sheet to service account mail from
+            # service_account.json
             gc = gspread.service_account('service_account.json')
             spreadsheet = gc.open_by_key(file_id)
             worksheet = spreadsheet.get_worksheet(0)
             rows = worksheet.get_all_records()
-            return str(rows)
+            return str(rows)  # returns all rows from sheet
         elif file_type.lower() == "doc":
             file = drive_service.files().export(fileId=file_id, mimeType='text/plain')
             file_content = file.execute()
@@ -71,7 +77,7 @@ def read_pdf_format(file_id):
             # Read the content of each page
             for page_number in range(num_pages):
                 page = pdf_reader.pages[page_number]
-                page_text += page.extract_text()
+                page_text += page.extract_text()  # concatenate the data extracted from each page
 
         return page_text
 
@@ -81,31 +87,41 @@ def read_pdf_format(file_id):
 
 def process():
     list_files()
-    same_file = True
-    while same_file:
+    new_file = True
+    while new_file:
+        # Google drive api requires file id to get content, so take the file id from input
         file_id = input("Enter the file id of file you want to use:")
+        # get file type to perform actions based on type
         file_type = input("Enter the file type (sheet/doc/pdf):")
+        # pass the file id and type to get file content
         content = read_file(file_id, file_type)
         if content is not None:
             file_operations = True
             while file_operations:
                 action = input("Enter what action you want to perform (Q-Query about details in the file/R-Read):")
+                # Query - it takes the file content, passes data to openai api and allows it to read and answer query
                 if action.lower() == 'q':
                     try:
                         query = input("Enter the prompt:")
+                        # when input data length is greater than 4096,splits content into chunks and performs the action
                         if len(content) > 4096:
+                            # remove spaces to reduce the token count
                             cleaned_text = re.sub(r'\s+', '', content)
+                            # split the content into chunks
                             chunked_text = [cleaned_text[i:i + 4096] for i in range(0, len(cleaned_text), 4096)]
                             response = ""
                             for chunk in chunked_text:
+                                # call gpt api to get response for each chunk and concatenate the response
                                 chunk_response = call_gpt(chunk, query)
                                 response += chunk_response
                         else:
+                            # if the content length is less than 4096 call gpt api directly
                             response = call_gpt(content, query)
                         print(response)
 
                     except Exception as e:
                         print("An error occurred while Querying Content:" + str(e))
+                # when action is to read the content
                 elif action.lower() == 'r':
                     try:
                         print(content)
@@ -114,6 +130,7 @@ def process():
                 else:
                     print(" Choose either Q or R!!")
                     continue
+
                 more_operations = input("Do you want to perform more actions on this file? (Y/N):")
                 if more_operations.lower() == 'y':
                     continue
@@ -121,19 +138,22 @@ def process():
                     file_operations = False
                 else:
                     print("Invalid Input")
-
+        else:
+            print("No content in the selected file!!")
         select_other_file = input("Do you want to choose another file to perform actions? (Y/N):")
         if select_other_file.lower() == 'y':
-            same_file = True
+            new_file = True
         elif select_other_file.lower() == 'n':
-            same_file = False
+            new_file = False
         else:
             print("Invalid Input")
 
 
 def call_gpt(content, query):
     try:
+        # creating prompt to GPT api passing query and the content on which we want to query
         prompt = query + ':' + content
+        # using Chatcompletion endpoint and GPT 3.5 turbo model since they gave better response and cost-effective model
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}])
@@ -146,6 +166,7 @@ def call_gpt(content, query):
 if __name__ == '__main__':
     while 1:
         process()
+        # remove the temp file created in run time
         os.remove("output.pdf")
         proceed = input(" Do you want to exit the program? (Y/N):")
         if proceed.lower() == 'n':
