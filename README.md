@@ -9,9 +9,13 @@ This application allows you to list the files available in your Google Drive, fa
 To do list:
 
 1. Install all the dependencies with **pip -r requirement.txt** or run the below commmonds in CLI to install dependencies
+
     pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+    
     pip install gspread
+    
     pip install PyPDF2
+    
     pip install openai
 2. Create an OpenAI account by signing up in www.openai.com and follow the steps from the link(https://www.howtogeek.com/885918/how-to-get-an-openai-api-key/) to get API KEY. Replace the key in code for the variable "openai.api_key"
 3. Once you run the program, the application asks you to login to the google account on which you want to perform action. 
