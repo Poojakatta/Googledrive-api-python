@@ -8,7 +8,7 @@ This application allows you to list the files available in your Google Drive, fa
 
 To do list:
 
-1. Install all the dependencies with **pip -r requirement.txt** or run the below commmonds in CLI to install dependencies
+1. Install all the dependencies with **pip -r requirement.txt** or run the below commands in CLI to install dependencies
 
     pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
     
